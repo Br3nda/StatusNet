@@ -434,7 +434,10 @@ create table user_group (
     design_id integer /*comment 'id of a design' */ references design(id),
 
     created timestamp not null default CURRENT_TIMESTAMP /* comment 'date this record was created' */,
-    modified timestamp /* comment 'date this record was modified' */
+    modified timestamp /* comment 'date this record was modified' */,
+
+    uri varchar(255) unique /* comment 'universal identifier' */,
+    mainpage varchar(255) /* comment 'page for group info to link to'*/
 
 );
 create index user_group_nickname_idx on user_group using btree(nickname);

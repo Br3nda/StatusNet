@@ -138,3 +138,6 @@ create table inbox (
 
 );
 
+ALTER table user_group ADD COLUMN uri varchar(255); /* comment 'universal identifier',*/
+ALTER TABLE user_group ADD CONSTRAINT uri UNIQUE (uri);
+ALTER table user_group ADD COLUMN mainpage varchar(255); /* comment 'page for group info to link to'*/
