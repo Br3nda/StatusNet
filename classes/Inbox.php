@@ -115,10 +115,10 @@ class Inbox extends Memcached_DataObject
      */
     static function insertNotice($user_id, $notice_id)
     {
-		// Going straight to the DB rather than trusting our caching
-		// during an update. Note: not using DB_DataObject::staticGet,
-		// which is unsafe to use directly (in-process caching causes
-		// memory leaks, which accumulate in queue processes).
+        // Going straight to the DB rather than trusting our caching
+        // during an update. Note: not using DB_DataObject::staticGet,
+        // which is unsafe to use directly (in-process caching causes
+        // memory leaks, which accumulate in queue processes).
         $inbox = new Inbox();
         if (!$inbox->get('user_id', $user_id)) {
             $inbox = Inbox::initialize($user_id);
@@ -134,14 +134,28 @@ class Inbox extends Memcached_DataObject
             // due to an error. Skip the dupe silently.
             return true;
         }
-
-        $result = $inbox->query(sprintf('UPDATE inbox '.
-                                        'set notice_ids = concat(cast(0x%08x as binary(4)), '.
-                                        'substr(notice_ids, 1, %d)) '.
-                                        'WHERE user_id = %d',
-                                        $notice_id,
-                                        4 * (self::MAX_NOTICES - 1),
-                                        $user_id));
+        switch(common_config('db', 'type')) {
+            case 'mysql':
+            case 'mysqli':
+              $result = $inbox->query(sprintf('UPDATE inbox '.
+                          'set notice_ids = concat(cast(0x%08x as binary(4)), '.
+                          'substr(notice_ids, 1, %d)) '.
+                          'WHERE user_id = %d',
+                          $notice_id,
+                          4 * (self::MAX_NOTICES - 1),
+                          $user_id));
+            break;
+            case 'pgsql':
+            //todo check it isn't bigger than MAX_NOTICES
+            $ids[] = $notice_id;
+            $packed = call_user_func_array('pack', array_merge(array('N*'), $ids));
+            $result = $inbox->query(sprintf('UPDATE inbox '.
+                              'set notice_ids = \'%s\'::bytea '.
+                              'WHERE user_id = %d',
+                              pg_escape_bytea($packed),
+                              $user_id));
+            break;
+        }
 
         if ($result) {
             self::blow('inbox:user_id:%d', $user_id);
@@ -257,6 +271,10 @@ class Inbox extends Memcached_DataObject
      */
     protected function pack(array $ids)
     {
+        //For postgres, we have to decode the blob
+        if ('pgsql' == common_config('db', 'type')) {
+            $ids = pg_escape_bytea($ids);
+        }
         $this->notice_ids = call_user_func_array('pack', array_merge(array('N*'), $ids));
     }
 
@@ -265,6 +283,9 @@ class Inbox extends Memcached_DataObject
      */
     protected function unpack()
     {
+        if ('pgsql' == common_config('db', 'type')) {
+            return unpack('N*', pg_unescape_bytea($this->notice_ids));
+        }
         return unpack('N*', $this->notice_ids);
     }
 }
