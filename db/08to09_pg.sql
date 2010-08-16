@@ -141,3 +141,13 @@ create table inbox (
 ALTER table user_group ADD COLUMN uri varchar(255); /* comment 'universal identifier',*/
 ALTER TABLE user_group ADD CONSTRAINT uri UNIQUE (uri);
 ALTER table user_group ADD COLUMN mainpage varchar(255); /* comment 'page for group info to link to'*/
+
+create table local_group (
+
+   group_id integer primary key /* comment 'group represented' */ references user_group (id),
+   nickname varchar(64) unique /* comment 'group represented' */,
+
+   created timestamp not null DEFAULT CURRENT_TIMESTAMP /* comment 'date this record was created' */,
+   modified timestamp /* comment 'date this record was modified' */
+
+);
