@@ -45,12 +45,12 @@ class GroupsByMembersSection extends GroupSection
 {
     function getGroups()
     {
-        $qry = 'SELECT user_group.*, count(*) as value ' .
-          'FROM user_group JOIN group_member '.
-          'ON user_group.id = group_member.group_id ' .
-          'GROUP BY user_group.id,user_group.nickname,user_group.fullname,user_group.homepage,user_group.description,user_group.location,user_group.original_logo,user_group.homepage_logo,user_group.stream_logo,user_group.mini_logo,user_group.created,user_group.modified,user_group.design_id ' .
+        $qry = 'SELECT ug.id, ug.nickname, ug.fullname, ug.homepage, ug.description, ug.location, ug.original_logo, ug.homepage_logo, ug.stream_logo, ug.mini_logo, ug.created,ug.modified,ug.design_id,ug.uri,ug.mainpage, '.
+          'count(*) as value ' .
+          'FROM user_group ug JOIN group_member '.
+          'ON ug.id = group_member.group_id ' .
+          'GROUP BY ug.id, ug.nickname, ug.fullname, ug.homepage, ug.description, ug.location, ug.original_logo, ug.homepage_logo, ug.stream_logo, ug.mini_logo, ug.created,ug.modified,ug.design_id,ug.uri,ug.mainpage ' .
           'ORDER BY value DESC ';
-
         $limit = GROUPS_PER_SECTION;
         $offset = 0;
 
